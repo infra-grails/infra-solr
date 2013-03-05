@@ -22,3 +22,15 @@ log4j = {
 
     warn   'org.mortbay.log'
 }
+plugins {
+    infraSolr {
+        maxRetries = 1
+        connectionTimeout = 5000
+        commitWithinMs = 2000
+    }
+}
+environments {
+    production {
+        plugins.infraSolr.host = "http://localhost:8080/solr"
+    }
+}
