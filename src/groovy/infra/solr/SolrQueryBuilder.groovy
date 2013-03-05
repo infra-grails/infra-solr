@@ -38,7 +38,7 @@ class SolrQueryBuilder {
     private String sortBy
     private SolrQuery.ORDER sortOrder = SolrQuery.ORDER.desc
 
-    private Map<String,List<Collection>> inVariants = [:]
+    private Map<String,List<Collection<String>>> inVariants = [:]
 
     private Map<String,String> filters = [:]
 
@@ -70,7 +70,7 @@ class SolrQueryBuilder {
      * @param variants
      * @return
      */
-    protected SolrQueryBuilder filterInAnd(String field, List<Collection> variants) {
+    protected SolrQueryBuilder filterInVariantsAnd(String field, List<Collection> variants) {
         inVariants.put(field, variants)
         this
     }
@@ -85,7 +85,7 @@ class SolrQueryBuilder {
         if (!inVariants.containsKey(field)) {
             inVariants.put(field, [])
         }
-        inVariants.get(field).add variants
+        inVariants.get(field).push variants
         this
     }
 
@@ -154,14 +154,14 @@ class SolrQueryBuilder {
             StringBuffer variantsQuery = new StringBuffer()
             variantsQuery.append v.key
             variantsQuery.append ":"
-            for(int i = 0; i<v.value.size(); i++) {
+            v.value.eachWithIndex{ Collection variants, int i ->
                 if (i > 0) {
                     variantsQuery.append " AND "
                     variantsQuery.append v.key
                     variantsQuery.append ":"
                 }
                 variantsQuery.append "("
-                variantsQuery.append v.value.getAt(i).join(' ')
+                variantsQuery.append variants.join(' ')
                 variantsQuery.append ")"
             }
             query.addFilterQuery(variantsQuery.toString())
