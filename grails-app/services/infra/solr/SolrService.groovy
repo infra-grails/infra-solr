@@ -49,6 +49,22 @@ class SolrService implements ApplicationContextAware {
         ids
     }
 
+    void delete(id) {
+        server.deleteById(id.toString(), COMMIT_WITHIN_MS)
+    }
+
+    void indexBean(bean) {
+        server.addBean(bean, COMMIT_WITHIN_MS)
+    }
+
+    void deleteAll() {
+        server.deleteByQuery("*:*", COMMIT_WITHIN_MS)
+    }
+
+    long countAll() {
+        server.query(new SolrQuery("*:*")).results.numFound
+    }
+
     @Override
     void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
         synchronized (this) {
