@@ -150,6 +150,7 @@ class SolrQueryBuilder {
         }
 
         for(v in inVariants.entrySet()) {
+            if(!v.value?.size()) continue;
             StringBuffer variantsQuery = new StringBuffer()
             variantsQuery.append v.key
             variantsQuery.append ":"
