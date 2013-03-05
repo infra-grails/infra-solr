@@ -40,7 +40,7 @@ class SolrQueryBuilder {
 
     private Map<String,List<Collection>> inVariants = [:]
 
-    private Map<String,String> filters
+    private Map<String,String> filters = [:]
 
     /**
      * Descending sort by field
