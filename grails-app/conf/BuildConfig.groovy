@@ -2,6 +2,14 @@ grails.project.class.dir = "target/classes"
 grails.project.test.class.dir = "target/test-classes"
 grails.project.test.reports.dir = "target/test-reports"
 
+grails.project.repos.default = "quonb-snapshot"
+
+grails.project.dependency.distribution = {
+    String serverRoot = "http://mvn.quonb.org"
+    remoteRepository(id: 'quonb-snapshot', url: serverRoot + '/plugins-snapshot-local/')
+    remoteRepository(id: 'quonb-release', url: serverRoot + '/plugins-release-local/')
+}
+
 grails.project.dependency.resolution = {
     // inherit Grails' default dependencies
     inherits("global") {
@@ -12,25 +20,18 @@ grails.project.dependency.resolution = {
     legacyResolve false // whether to do a secondary resolve on plugin installation, not advised and here for backwards compatibility
     repositories {
         grailsCentral()
-        // uncomment the below to enable remote dependency resolution
-        // from public Maven repositories
-        //mavenLocal()
-        //mavenCentral()
-        //mavenRepo "http://snapshots.repository.codehaus.org"
-        //mavenRepo "http://repository.codehaus.org"
-        //mavenRepo "http://download.java.net/maven/2/"
-        //mavenRepo "http://repository.jboss.com/maven2/"
+        mavenCentral()
+        mavenRepo "http://mvn.quonb.org/repo"
+        grailsRepo "http://mvn.quonb.org/repo", "quonb"
     }
     dependencies {
-        // specify dependencies here under either 'build', 'compile', 'runtime', 'test' or 'provided' scopes eg.
-
-        // runtime 'mysql:mysql-connector-java:5.1.21'
+        compile 'org.apache.solr:solr-solrj:4.1.0'
+        compile 'org.apache.solr:solr-core:4.1.0'
     }
 
     plugins {
         build(":tomcat:$grailsVersion",
-              ":release:2.2.0",
-              ":rest-client-builder:1.0.3") {
+              ":release:2.2.1") {
             export = false
         }
     }
