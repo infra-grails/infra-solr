@@ -10,3 +10,4 @@ out/
 .settings
 web-app
 plugin.xml
+*~

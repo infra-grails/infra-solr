@@ -64,13 +64,13 @@ class SolrService implements ApplicationContextAware {
     }
 
     private Map getConfig() {
-        ((ConfigObject)grailsApplication.config.plugins.infraSolr).flatten()
+        ((ConfigObject)grailsApplication.config.plugin.infraSolr).flatten()
     }
 
     private initHttpSolr() {
-        log.info "Running hHtp Solr Server..."
+        log.info "Running Http Solr Server..."
 
-        server = new HttpSolrServer(config.host.toString())
+        server = new HttpSolrServer("http://${config.host}")
 
         config.keySet().each { String k ->
             String setter = "set"+k[0].toUpperCase()+k.substring(1)
