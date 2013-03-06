@@ -82,10 +82,12 @@ class SolrService implements ApplicationContextAware {
     void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
         synchronized (this) {
             mainServer = runServer("")
-            List<String> cores = config.cores
-            if (cores.size()) {
-                cores.each {
-                    coreServers.put(it, runServer(it))
+            if (config.cores instanceof List) {
+                List<String> cores = config.cores
+                if (cores.size()) {
+                    cores.each {
+                        coreServers.put(it, runServer(it))
+                    }
                 }
             }
         }
