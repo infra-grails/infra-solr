@@ -73,7 +73,9 @@ class SolrService implements ApplicationContextAware {
     }
 
     long countAll(String core=null) {
-        getCoreServer(core).query(new SolrQuery("*:*")).results.numFound
+        SolrQuery q = new SolrQuery("*:*")
+        q.setParam("rows", "0")
+        getCoreServer(core).query(q).results.numFound
     }
 
     @Override
