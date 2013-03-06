@@ -44,6 +44,16 @@ abstract class SolrQueryBuilder<T extends SolrQueryBuilder<T>> {
 
     private Map<String,String> filters = [:]
 
+    private String core;
+
+    protected void setCore(String core) {
+        this.core = core
+    }
+
+    String getCore() {
+        core
+    }
+
     /**
      * Descending sort by field
      * @param field

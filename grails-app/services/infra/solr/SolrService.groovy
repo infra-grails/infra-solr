@@ -19,21 +19,32 @@ class SolrService implements ApplicationContextAware {
 
     def grailsApplication
 
-    private SolrServer server
+    private SolrServer mainServer
+    private Map<String,SolrServer> coreServers = [:]
     int COMMIT_WITHIN_MS = 2000
 
-    SolrServer getServer() {
-        server
+    SolrServer getMainServer() {
+        mainServer
+    }
+
+    SolrServer getCoreServer(String core) {
+        if (!core) return mainServer;
+        if (coreServers.containsKey(core)) {
+            coreServers.get(core)
+        } else {
+            coreServers.put(core, runServer(core))
+        }
+        throw new IllegalArgumentException("Cannot find ${core} Solr core")
     }
 
     List queryIds(SolrQueryBuilder builder) {
-        queryIds(builder.build())
+        queryIds(builder.build(), builder.core)
     }
 
-    List queryIds(SolrQuery query) {
+    List queryIds(SolrQuery query, String core=null) {
         QueryResponse response
         try {
-            response = server.query(query)
+            response = getCoreServer(core).query(query)
         } catch (SolrException e) {
             log.error("Cannot parse query: ${query}", e)
             return []
@@ -49,29 +60,31 @@ class SolrService implements ApplicationContextAware {
         ids
     }
 
-    void delete(id) {
-        server.deleteById(id.toString(), COMMIT_WITHIN_MS)
+    void delete(id, String core=null) {
+        getCoreServer(core).deleteById(id.toString(), COMMIT_WITHIN_MS)
     }
 
-    void indexBean(bean) {
-        server.addBean(bean, COMMIT_WITHIN_MS)
+    void indexBean(bean, String core=null) {
+        getCoreServer(core).addBean(bean, COMMIT_WITHIN_MS)
     }
 
-    void deleteAll() {
-        server.deleteByQuery("*:*", COMMIT_WITHIN_MS)
+    void deleteAll(String core=null) {
+        getCoreServer(core).deleteByQuery("*:*", COMMIT_WITHIN_MS)
     }
 
-    long countAll() {
-        server.query(new SolrQuery("*:*")).results.numFound
+    long countAll(String core=null) {
+        getCoreServer(core).query(new SolrQuery("*:*")).results.numFound
     }
 
     @Override
     void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
         synchronized (this) {
-            if (config.host) {
-                initHttpSolr()
-            } else {
-                initEmbeddedSolr()
+            mainServer = runServer("")
+            List<String> cores = config.cores
+            if (cores.size()) {
+                cores.each {
+                    coreServers.put(it, runServer(it))
+                }
             }
         }
         if (config.commitWithinMs) {
@@ -83,31 +96,38 @@ class SolrService implements ApplicationContextAware {
         ((ConfigObject)grailsApplication.config.plugin.infraSolr).flatten()
     }
 
-    private initHttpSolr() {
-        log.info "Running Http Solr Server..."
+    private SolrServer runServer(String core) {
+        config.host ? runHttpServer(core) : runEmbeddedServer(core)
+    }
 
-        server = new HttpSolrServer("http://${config.host}")
+    private SolrServer runHttpServer(String core) {
+        log.info "Running Http Solr Server [${core?:'(main)'}]..."
+
+        SolrServer s = new HttpSolrServer("http://${config.host}"+(core?"/${core}":""))
 
         config.keySet().each { String k ->
             String setter = "set"+k[0].toUpperCase()+k.substring(1)
-            if(server.metaClass.methods.any {it.name == setter}) {
-                server[k] = config[k]
+            if(mainServer.metaClass.methods.any {it.name == setter}) {
+                mainServer[k] = config[k]
             }
         }
 
-        log.info "Http Solr Server is running."
+        log.info "Http Solr Server [${core?:'(main)'}] is running."
+
+        s
     }
 
-    private initEmbeddedSolr() {
+    private SolrServer runEmbeddedServer(String core) {
         String solrHome = new ClassPathResource(".", this.class).file.absolutePath
         String solrConfig = solrHome.concat("/solr.xml")
 
         CoreContainer container = new CoreContainer(solrHome, new File(solrConfig));
 
-        log.info "Running Embedded Solr Server..."
+        log.info "Running Embedded Solr Server [${core?:'(main)'}]..."
 
-        server = new EmbeddedSolrServer(container, "")
+        SolrServer s = new EmbeddedSolrServer(container, core)
 
-        println "Embedded Solr Server is running."
+        println "Embedded Solr Server [${core?:'(main)'}] is running."
+        s
     }
 }
