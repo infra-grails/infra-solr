@@ -27,6 +27,7 @@ plugin {
         maxRetries = 1
         connectionTimeout = 5000
         commitWithinMs = 2000
+        cores = []
     }
 }
 environments {
