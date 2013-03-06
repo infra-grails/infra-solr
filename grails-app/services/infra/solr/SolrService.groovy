@@ -6,8 +6,8 @@ import org.apache.solr.client.solrj.embedded.EmbeddedSolrServer
 import org.apache.solr.client.solrj.impl.HttpSolrServer
 import org.apache.solr.client.solrj.response.QueryResponse
 import org.apache.solr.common.SolrDocument
+import org.apache.solr.common.SolrException
 import org.apache.solr.core.CoreContainer
-import org.apache.solr.parser.ParseException
 import org.springframework.beans.BeansException
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
@@ -34,7 +34,7 @@ class SolrService implements ApplicationContextAware {
         QueryResponse response
         try {
             response = server.query(query)
-        } catch (ParseException e) {
+        } catch (SolrException e) {
             log.error("Cannot parse query: ${query}", e)
             return []
         }

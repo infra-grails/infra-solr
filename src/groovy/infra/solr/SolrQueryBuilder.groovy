@@ -1,12 +1,14 @@
 package infra.solr
 
+import groovy.transform.CompileStatic
 import org.apache.solr.client.solrj.SolrQuery
 
 /**
  * @author alari
  * @since 3/5/13 4:54 PM
  */
-class SolrQueryBuilder {
+@CompileStatic
+abstract class SolrQueryBuilder<T extends SolrQueryBuilder<T>> {
 
     private final static Map<String,String> searchReplace = [
             '\\': '\\\\',
@@ -47,10 +49,10 @@ class SolrQueryBuilder {
      * @param field
      * @return
      */
-    protected SolrQueryBuilder sortDesc(String field) {
+    protected T sortDesc(String field) {
         sortBy = field
         sortOrder = SolrQuery.ORDER.desc
-        this
+        (T)this
     }
 
     /**
@@ -58,10 +60,10 @@ class SolrQueryBuilder {
      * @param field
      * @return
      */
-    protected SolrQueryBuilder sortAsc(String field) {
+    protected T sortAsc(String field) {
         sortBy = field
         sortOrder = SolrQuery.ORDER.asc
-        this
+        (T)this
     }
 
     /**
@@ -70,72 +72,63 @@ class SolrQueryBuilder {
      * @param variants
      * @return
      */
-    protected SolrQueryBuilder filterInVariantsAnd(String field, List<Collection> variants) {
-        inVariants.put(field, variants)
-        this
-    }
-
-    /**
-     * $field:variants AND $field:variants
-     * @param field
-     * @param variants
-     * @return
-     */
-    protected SolrQueryBuilder filterInAnd(String field, Collection variants) {
-        if (!inVariants.containsKey(field)) {
-            inVariants.put(field, [])
+    protected T filterInAnd(String field, Collection variants) {
+        if (variants && variants.size()) {
+            if (!inVariants.containsKey(field)) {
+                inVariants.put(field, [])
+            }
+            inVariants.get(field).push variants
         }
-        inVariants.get(field).push variants
-        this
+        (T)this
     }
 
-    protected SolrQueryBuilder filter(String field, String value) {
+    protected T filter(String field, String value) {
         filters.put(field, value)
-        this
+        (T)this
     }
 
-    protected SolrQueryBuilder filter(String field, boolean value) {
+    protected T filter(String field, boolean value) {
         filters.put(field, value ? 'true' : 'false')
-        this
+        (T)this
     }
 
-    protected SolrQueryBuilder filter(String field, Collection values) {
+    protected T filter(String field, Collection values) {
         filters.put(field, "("+values.join(" ")+")")
-        this
+        (T)this
     }
 
-    protected SolrQueryBuilder filterOr(String field, Collection values) {
+    protected T filterOr(String field, Collection values) {
         filters.put(field, "("+values.join(" OR ")+")")
-        this
+        (T)this
     }
 
-    protected SolrQueryBuilder filterRange(String field, from, to) {
+    protected T filterRange(String field, from, to) {
         filters.put(field, "[${from} TO ${to}]")
-        this
+        (T)this
     }
 
-    SolrQueryBuilder limit(long b) {
+    T limit(long b) {
         limit = b
-        this
+        (T)this
     }
 
-    SolrQueryBuilder offset(long b) {
+    T offset(long b) {
         offset = b
-        this
+        (T)this
     }
 
-    SolrQueryBuilder search(String query) {
+    T search(String query) {
         search("text", query)
     }
 
-    SolrQueryBuilder search(String field, String query) {
+    T search(String field, String query) {
         searchField = field
         for (entry in searchReplace.entrySet()) {
             query.replace(entry.key, entry.value)
         }
         searchQuery = '"'.concat(query).concat('"')
 
-        this
+        (T)this
     }
 
     SolrQuery build() {
@@ -145,20 +138,21 @@ class SolrQueryBuilder {
         if (offset) query.setParam("start", offset.toString())
         if (limit) query.setParam("rows", limit.toString())
 
-        for(f in filters) {
-            query.addFilterQuery("${f.key}:${f.value}")
+        for(Map.Entry<String,String> f in filters.entrySet()) {
+            query.addFilterQuery(f.key + ":" + f.value)
         }
 
-        for(v in inVariants.entrySet()) {
+        for(Map.Entry<String,List<Collection<String>>> v in inVariants.entrySet()) {
             if(!v.value?.size()) continue;
             StringBuffer variantsQuery = new StringBuffer()
-            variantsQuery.append v.key
-            variantsQuery.append ":"
-            v.value.eachWithIndex{ Collection variants, int i ->
+
+            Collection variants
+            for(int i=0; i<v.value.size(); i++){
+                variants=v.value[i]
+                variantsQuery.append v.key
+                variantsQuery.append ":"
                 if (i > 0) {
                     variantsQuery.append " AND "
-                    variantsQuery.append v.key
-                    variantsQuery.append ":"
                 }
                 variantsQuery.append "("
                 variantsQuery.append variants.join(' ')
@@ -166,7 +160,6 @@ class SolrQueryBuilder {
             }
             query.addFilterQuery(variantsQuery.toString())
         }
-
         query
     }
 
