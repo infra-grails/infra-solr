@@ -111,8 +111,8 @@ class SolrService implements ApplicationContextAware {
 
         config.keySet().each { String k ->
             String setter = "set"+k[0].toUpperCase()+k.substring(1)
-            if(mainServer.metaClass.methods.any {it.name == setter}) {
-                mainServer[k] = config[k]
+            if(s.metaClass.methods.any {it.name == setter}) {
+                s[k] = config[k]
             }
         }
 
