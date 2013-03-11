@@ -159,11 +159,11 @@ abstract class SolrQueryBuilder<T extends SolrQueryBuilder<T>> {
             Collection variants
             for(int i=0; i<v.value.size(); i++){
                 variants=v.value[i]
-                variantsQuery.append v.key
-                variantsQuery.append ":"
                 if (i > 0) {
                     variantsQuery.append " AND "
                 }
+                variantsQuery.append v.key
+                variantsQuery.append ":"
                 variantsQuery.append "("
                 variantsQuery.append variants.join(' ')
                 variantsQuery.append ")"
