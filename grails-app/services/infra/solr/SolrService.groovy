@@ -37,18 +37,8 @@ class SolrService implements ApplicationContextAware {
         throw new IllegalArgumentException("Cannot find ${core} Solr core")
     }
 
-    List queryIds(SolrQueryBuilder builder) {
-        queryIds(builder.build(), builder.core)
-    }
-
-    List queryIds(SolrQuery query, String core=null) {
-        QueryResponse response
-        try {
-            response = getCoreServer(core).query(query)
-        } catch (SolrException e) {
-            log.error("Cannot parse query: ${query}", e)
-            return []
-        }
+    List<Long> queryIds(SolrQueryBuilder builder) {
+        QueryResponse response = queryResponse(builder)
 
         List<Long> ids = []
         if (response.results.numFound) {
@@ -56,8 +46,17 @@ class SolrService implements ApplicationContextAware {
                 ids << Long.parseLong((String) d.getFieldValue("id"))
             }
         }
-
         ids
+    }
+
+    QueryResponse queryResponse(SolrQueryBuilder builder) {
+        SolrQuery query = builder.build()
+        try {
+            return getCoreServer(builder.core).query(query)
+        } catch (SolrException e) {
+            log.error("Cannot parse query: ${query}", e)
+            return null
+        }
     }
 
     void delete(id, String core=null) {
