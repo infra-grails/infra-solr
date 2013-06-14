@@ -28,13 +28,11 @@ class SolrService implements ApplicationContextAware {
     }
 
     SolrServer getCoreServer(String core) {
-        if (!core) return mainServer;
-        if (coreServers.containsKey(core)) {
-            coreServers.get(core)
+        if (!core) {
+            mainServer
         } else {
-            coreServers.put(core, runServer(core))
+            coreServers.get(core, runServer(core))
         }
-        throw new IllegalArgumentException("Cannot find ${core} Solr core")
     }
 
     List<Long> queryIds(SolrQueryBuilder builder) {
