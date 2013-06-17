@@ -31,7 +31,11 @@ class SolrService implements ApplicationContextAware {
         if (!core) {
             mainServer
         } else {
-            coreServers.get(core, runServer(core))
+            if (core in coreServers) {
+                coreServers[core]
+            } else {
+                coreServers[core] = runServer(core)
+            }
         }
     }
 
