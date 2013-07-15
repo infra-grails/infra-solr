@@ -23,6 +23,8 @@ class SolrService implements ApplicationContextAware {
     private Map<String,SolrServer> coreServers = [:]
     int COMMIT_WITHIN_MS = 2000
 
+    private CoreContainer container
+
     SolrServer getMainServer() {
         mainServer
     }
@@ -122,11 +124,16 @@ class SolrService implements ApplicationContextAware {
         s
     }
 
-    private SolrServer runEmbeddedServer(String core) {
-        String solrHome = new ClassPathResource(".", this.class).file.absolutePath
-        String solrConfig = solrHome.concat("/solr.xml")
+    private synchronized SolrServer runEmbeddedServer(String core) {
+        if(container == null) {
+            log.info "Running Solr Core Container..."
 
-        CoreContainer container = new CoreContainer(solrHome, new File(solrConfig));
+            String solrHome = new ClassPathResource(".", this.class).file.absolutePath
+            String solrConfig = solrHome.concat("/solr.xml")
+
+            container = new CoreContainer(solrHome, new File(solrConfig));
+            log.info "Solr Core Container is ready."
+        }
 
         log.info "Running Embedded Solr Server [${core?:'(main)'}]..."
 
